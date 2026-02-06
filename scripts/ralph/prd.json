@@ -1,0 +1,524 @@
+{
+  "project": "AI Content Repurposer",
+  "branchName": "master",
+  "description": "Web app that transforms long-form markdown content into platform-optimized formats (LinkedIn, Twitter/X, Email, Docs) using AI streaming, with a split-pane CodeMirror editor, export system, and localStorage persistence.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Install core dependencies and configure environment",
+      "description": "As a developer, I need all project dependencies installed and environment variables configured so the project has the packages required for AI, editors, and markdown processing.",
+      "acceptanceCriteria": [
+        "Install AI SDK packages: `ai` and `@ai-sdk/anthropic`",
+        "Install CodeMirror packages: `@codemirror/view`, `@codemirror/state`, `@codemirror/lang-markdown`, `@codemirror/language`, `@uiw/react-codemirror`",
+        "Install markdown packages: `unified`, `remark-parse`, `remark-rehype`, `rehype-stringify`, `rehype-sanitize`",
+        "Install utility packages: `lucide-react`",
+        "Update `.env.local` to rename `ZAI_API_KEY` to `Z_AI_API_KEY`, `ZAI_BASE_URL` to `Z_AI_BASE_URL`, `ZAI_MODEL` to `Z_AI_MODEL` (keep same values)",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "All dependencies installed successfully. Environment variables renamed in .env.local (not committed per .gitignore)."
+    },
+    {
+      "id": "US-002",
+      "title": "Initialize shadcn/ui with required components",
+      "description": "As a developer, I need shadcn/ui initialized and core UI components added so subsequent stories can use accessible, composable primitives.",
+      "acceptanceCriteria": [
+        "Run `npx shadcn@latest init` with default config (New York style, zinc color, CSS variables enabled)",
+        "Add shadcn/ui components: button, tabs, dialog, badge, separator, sheet, sonner (toast)",
+        "Verify components are generated in `components/ui/` directory",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "shadcn/ui initialized successfully with all 7 required components. Components verified in components/ui/. Typecheck passes."
+    },
+    {
+      "id": "US-003",
+      "title": "Create project structure, types, and core lib files",
+      "description": "As a developer, I need the folder structure, TypeScript interfaces, AI provider config, and system prompts created so all subsequent stories have a foundation to build on.",
+      "acceptanceCriteria": [
+        "Create folder structure: `components/editor/`, `components/format/`, `components/settings/`, `components/export/`, `lib/`, `hooks/`, `types/`",
+        "Create `types/index.ts` with interfaces: `Format` (union: 'linkedin' | 'twitter' | 'email' | 'docs'), `Tone` (union: 'professional' | 'casual' | 'technical' | 'storytelling'), `RepurposeRequest` (content, format, tone?, customInstructions?), `AppState` (sourceContent, outputs record, settings, lastUpdated)",
+        "Create `lib/ai.ts` that exports a configured Anthropic provider using `createAnthropic` with `process.env.Z_AI_BASE_URL` as baseURL and `process.env.Z_AI_API_KEY` as apiKey, and exports the model as `provider(process.env.Z_AI_MODEL || 'glm-4.7')`",
+        "Create `lib/prompts.ts` that exports a `getSystemPrompt(format, tone?, customInstructions?)` function returning the correct system prompt string per format (LinkedIn: hook-first 1300 char target with hashtags; Twitter: numbered tweets <=280 chars; Email: subject+preview+greeting+body+CTA; Docs: hierarchical headers+TL;DR+bullets)",
+        "Create empty stub files: `lib/metrics.ts`, `lib/storage.ts`, `lib/export.ts` (each exporting nothing, just a comment placeholder)",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Clean implementation. All folder structure, types, AI config, and system prompts created successfully. Typecheck passes."
+    },
+    {
+      "id": "US-004",
+      "title": "Split-pane layout shell with header",
+      "description": "As a user, I want to see a split-pane layout with a header, left pane, and right pane so the app has its core visual structure.",
+      "acceptanceCriteria": [
+        "Update `app/layout.tsx` with proper metadata (title: 'AI Content Repurposer', description), Geist fonts, and dark mode support via class on html element",
+        "Update `app/page.tsx` to render: header bar with title 'AI Content Repurposer' on the left and a settings gear icon button (from lucide-react) on the right",
+        "Below header: two-pane container — left pane (50% width) and right pane (50% width) on desktop (>=1024px)",
+        "On mobile (<1024px): panes stack vertically (left on top, right below)",
+        "Panes have visible borders/separators between them",
+        "Left pane shows placeholder text 'Source content area'",
+        "Right pane shows placeholder text 'Output area'",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Source editor with CodeMirror and metrics",
+      "description": "As a content creator, I want a markdown editor in the left pane where I can type or paste content, with word count and reading time displayed.",
+      "acceptanceCriteria": [
+        "Create `components/editor/SourceEditor.tsx` using `@uiw/react-codemirror` with markdown language extension",
+        "Editor fills the full height of the left pane (use flex layout, minus header and footer space)",
+        "Placeholder text visible when empty: 'Paste or type your blog post here...'",
+        "Editor exposes content via an `onChange` callback prop",
+        "Implement `lib/metrics.ts` with exported functions: `getWordCount(text): number`, `getCharCount(text): number`, `getReadingTime(text): string` (e.g., '5 min read')",
+        "Footer bar below the editor displays: word count, character count, and reading time (e.g., '1,247 words · 6,230 chars · 5 min read')",
+        "Wire SourceEditor into the left pane of `app/page.tsx`, storing content in React state",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — type text, see metrics update"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "AI streaming API route",
+      "description": "As a developer, I need a POST /api/repurpose endpoint that validates input and streams AI-generated content back using the Z AI provider.",
+      "acceptanceCriteria": [
+        "Create `app/api/repurpose/route.ts` with a POST handler",
+        "Parse JSON body expecting: `content` (string), `format` ('linkedin'|'twitter'|'email'|'docs'), optional `tone`, optional `customInstructions`",
+        "Return 400 `{ error: 'Content is required' }` if content is empty or missing",
+        "Return 400 `{ error: 'Invalid format' }` if format is not one of the 4 valid values",
+        "Import provider and model from `lib/ai.ts`, import `getSystemPrompt` from `lib/prompts.ts`",
+        "Call `streamText` from `ai` package with the model, system prompt, and user message `Repurpose the following content:\\n\\n${content}`",
+        "Return `result.toDataStreamResponse()`",
+        "Wrap in try/catch, return 500 `{ error: 'AI generation failed' }` on upstream errors",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "useRepurpose streaming hook",
+      "description": "As a developer, I need a React hook that calls the repurpose API and returns streamed content so components can display AI output in real-time.",
+      "acceptanceCriteria": [
+        "Create `hooks/useRepurpose.ts` that exports a `useRepurpose` hook",
+        "Hook uses `useCompletion` from `ai/react` configured to POST to `/api/repurpose`",
+        "Hook accepts `format` and returns: `output` (streamed text), `isLoading` (boolean), `error` (string|null), `generate(content, format, tone?, customInstructions?)` function",
+        "The `generate` function sends the body `{ content, format, tone, customInstructions }` to the API",
+        "Hook handles error states and exposes them",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Output panel with streaming display and Repurpose button",
+      "description": "As a user, I want to click a Repurpose button and see AI-generated content stream into the right pane in real-time.",
+      "acceptanceCriteria": [
+        "Create `components/editor/OutputEditor.tsx` using `@uiw/react-codemirror` with markdown extension (editable)",
+        "Editor displays the streamed output from the `useRepurpose` hook",
+        "Above the output editor: a 'Repurpose' button (default format: linkedin)",
+        "Clicking 'Repurpose' calls `generate()` with the source editor content and selected format",
+        "Button shows a loading spinner and is disabled while streaming",
+        "Button is disabled when source content is empty",
+        "Output footer shows word count and character count of the generated content",
+        "On API error: show a toast notification (using sonner) with the error message",
+        "Wire OutputEditor into the right pane of `app/page.tsx`",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — paste content in left pane, click Repurpose, see streaming output in right pane"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Editor toolbar with copy to clipboard",
+      "description": "As a user, I want to copy the generated output to my clipboard with one click.",
+      "acceptanceCriteria": [
+        "Create `components/editor/EditorToolbar.tsx` — a toolbar row rendered above the output editor",
+        "Toolbar contains a 'Copy' button with a clipboard icon (from lucide-react)",
+        "Clicking Copy writes the output content to the clipboard using `navigator.clipboard.writeText()`",
+        "Show a toast: 'Copied to clipboard!' on success",
+        "Copy button is disabled when the output is empty",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — generate content, click copy, see toast"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "localStorage persistence for source content",
+      "description": "As a user, I want my source content auto-saved so I don't lose work on page refresh.",
+      "acceptanceCriteria": [
+        "Implement `lib/storage.ts` with functions: `saveToStorage(key: string, value: string)`, `loadFromStorage(key: string): string | null`, `clearStorage(key: string)`",
+        "Create `hooks/useLocalStorage.ts` — hook that wraps useState with localStorage read on mount and debounced write (500ms) on change",
+        "Source editor content saved to localStorage key `repurposer:source` on every change (debounced 500ms)",
+        "On page load, restore content from `repurposer:source` into the source editor",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — type content, refresh page, content is restored"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Format tabs (LinkedIn, Twitter, Email, Docs)",
+      "description": "As a marketer, I want to select an output format from tabs above the output panel so I get platform-specific content.",
+      "acceptanceCriteria": [
+        "Create `components/format/FormatTabs.tsx` — tab bar using shadcn Tabs component with 4 tabs: LinkedIn (link icon), Twitter/X (twitter icon), Email Newsletter (mail icon), Documentation (file-text icon)",
+        "Active tab is visually highlighted",
+        "Create `components/format/FormatBadge.tsx` — small badge showing 'generated' (green) or empty/gray for 'not yet generated'",
+        "Each tab shows the FormatBadge indicating whether that format has generated content",
+        "Selecting a tab updates the active format in the parent state",
+        "Selected format is passed to the Repurpose button / useRepurpose hook",
+        "Switching tabs does NOT discard previously generated content",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — click between tabs, see active state change and badges"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Per-format output storage with editable output",
+      "description": "As a user, I want my edits to each format preserved independently so switching tabs doesn't lose my changes.",
+      "acceptanceCriteria": [
+        "Store generated outputs in state as a Record<Format, string | null> (one entry per format)",
+        "When a format is generated, store the result under that format key",
+        "When the user edits the output editor, update the stored content for the currently active format",
+        "Switching tabs loads the stored content for that format into the output editor",
+        "Persist all outputs to localStorage at key `repurposer:outputs` (debounced 500ms)",
+        "Restore outputs from localStorage on page load",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — generate LinkedIn, edit it, switch to Twitter tab, switch back, edits preserved"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "Export single format as .md with frontmatter",
+      "description": "As a user, I want to download the generated content for a format as a .md file with YAML frontmatter.",
+      "acceptanceCriteria": [
+        "Implement `lib/export.ts` with function `exportSingleFormat(format: Format, content: string, sourceTitle: string)` that creates and triggers download of a .md file",
+        "Exported file starts with YAML frontmatter block: source (first 50 chars of source), format, generated (ISO timestamp), word_count, character_count, tool ('AI Content Repurposer')",
+        "Filename pattern: `{format}-{YYYY-MM-DD}.md` (e.g., `linkedin-post-2026-02-06.md`)",
+        "Create `components/export/ExportButton.tsx` with a download icon button",
+        "Place ExportButton in the EditorToolbar",
+        "Button triggers browser file download when clicked",
+        "Button disabled when no content exists for the active format",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — generate content, click export, see download triggered"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "Platform-specific metrics and limit warnings",
+      "description": "As a user, I want to see platform-specific metrics and red warnings when I exceed character limits.",
+      "acceptanceCriteria": [
+        "Add `getPlatformMetrics(format: Format, content: string)` to `lib/metrics.ts` returning an object with relevant metrics per format",
+        "LinkedIn: show char count, green if <=1300, yellow if <=3000, red if >3000",
+        "Twitter: count tweets (split by numbered pattern 1/, 2/, etc.), flag any tweet >280 chars in red",
+        "Email: extract subject line, show its length, red if >50 chars; extract preview text, red if >90 chars",
+        "Docs: show section count (H2/H3 headers) and estimated reading time",
+        "Display metrics in the output footer, replacing the generic word/char count with format-specific info",
+        "Red text color on any metric that exceeds its platform limit",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — generate content for each format, check metrics display"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "title": "Regenerate per format",
+      "description": "As a user, I want to regenerate the AI output for the current format to get an alternative version.",
+      "acceptanceCriteria": [
+        "Add a 'Regenerate' button (refresh icon) in the EditorToolbar",
+        "Clicking Regenerate re-calls the API for the currently selected format only",
+        "Previous output for that format is replaced with the new streamed response",
+        "Other formats' stored content is untouched",
+        "Button disabled while streaming is in progress",
+        "Button disabled when no content has been generated yet for this format",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — generate LinkedIn, click Regenerate, see new output replace old"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-016",
+      "title": "Mobile responsive layout",
+      "description": "As a mobile user, I want the app to stack vertically on small screens with touch-friendly controls.",
+      "acceptanceCriteria": [
+        "Below 1024px: source editor stacks on top, format tabs below it, output editor at the bottom",
+        "Source editor section is collapsible on mobile (toggle button to expand/collapse)",
+        "Sticky bottom bar on mobile with copy and export action buttons",
+        "All tap targets are at least 44px",
+        "Layout works correctly at 375px viewport width",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — resize viewport to 375px width, verify stacked layout and usability"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-017",
+      "title": "Settings panel with tone, custom instructions, and theme",
+      "description": "As a power user, I want to customize tone per format, add custom instructions, and switch themes.",
+      "acceptanceCriteria": [
+        "Create `components/settings/SettingsPanel.tsx` using shadcn Sheet component (slide-over from right)",
+        "Triggered by clicking the gear icon in the header",
+        "Default tone selector per format: dropdown for each of the 4 formats, options: professional / casual / technical / storytelling",
+        "Custom instructions textarea: free-text field for user rules (e.g., 'Always mention The Growth Angle')",
+        "Theme toggle: light / dark / system (using radio group or segmented control)",
+        "Auto-save toggle (checkbox)",
+        "All settings persisted to localStorage at key `repurposer:settings`",
+        "Settings loaded on app init and passed to the repurpose API when generating",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — open settings, change a tone, close, verify it persists on reload"
+      ],
+      "priority": 17,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-018",
+      "title": "Batch Generate All formats",
+      "description": "As a user, I want to generate all 4 formats at once with a single click.",
+      "acceptanceCriteria": [
+        "Add a 'Generate All' button next to the format tabs",
+        "Clicking generates LinkedIn, Twitter, Email, Docs sequentially (one after another, not parallel)",
+        "Progress indicator showing which format is generating (e.g., 'Generating 2/4: Twitter...')",
+        "Each format's tab badge updates to 'generated' as it completes",
+        "If one format fails, continue with remaining formats and show error toast for the failed one",
+        "Button disabled while batch generation is in progress",
+        "Button disabled when source content is empty",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — paste content, click Generate All, watch each tab badge update"
+      ],
+      "priority": 18,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-019",
+      "title": "Batch export as .zip",
+      "description": "As a user, I want to download all generated formats as a single .zip file.",
+      "acceptanceCriteria": [
+        "Install `jszip` and `file-saver` packages",
+        "Add `exportAllFormats(outputs: Record<Format, string | null>, sourceTitle: string)` to `lib/export.ts`",
+        "Creates a .zip containing one .md file per generated format (with YAML frontmatter), skipping null formats",
+        "Filename: `content-repurposed-{YYYY-MM-DD}.zip`",
+        "Add 'Export All' button in the EditorToolbar (separate from single export)",
+        "Button disabled if no formats have been generated",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — generate multiple formats, click Export All, see zip download"
+      ],
+      "priority": 19,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-020",
+      "title": "File upload via drag-and-drop and button",
+      "description": "As a content creator, I want to upload a .md file by dragging it onto the editor or clicking an upload button.",
+      "acceptanceCriteria": [
+        "Add drag-and-drop zone on the source editor area — visual highlight (dashed border, color change) when dragging a file over",
+        "Add 'Upload .md' button with an upload icon below the source editor",
+        "Only accept `.md` and `.txt` file extensions",
+        "File contents loaded into the source editor, replacing current content",
+        "If editor already has content, show a confirmation dialog (shadcn Dialog): 'Replace current content?' before replacing",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — click upload button, verify dialog appears if content exists"
+      ],
+      "priority": 20,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-021",
+      "title": "Clear button with confirmation dialog",
+      "description": "As a user, I want a Clear button to reset the editor with a safety confirmation.",
+      "acceptanceCriteria": [
+        "Add 'Clear' button (trash icon) in the source editor footer area",
+        "Clicking shows a confirmation dialog (shadcn Dialog): 'Clear all content? This cannot be undone.'",
+        "Confirming clears the source editor content and all generated outputs",
+        "Also clears localStorage keys: `repurposer:source` and `repurposer:outputs`",
+        "Cancel button dismisses the dialog with no changes",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — type content, click Clear, confirm, verify editor is empty"
+      ],
+      "priority": 21,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-022",
+      "title": "Session restore with dismissible banner",
+      "description": "As a returning user, I want to see a banner confirming my previous session was restored.",
+      "acceptanceCriteria": [
+        "On page load, if `repurposer:source` exists in localStorage with non-empty content, show a banner at the top of the page",
+        "Banner message: 'Welcome back! Your previous session has been restored.'",
+        "Dismiss button (X icon) to close the banner",
+        "'Start fresh' link in the banner that clears all stored content and reloads",
+        "Banner does not appear if no previous content exists",
+        "Banner uses a subtle background color (e.g., blue-50) and is not intrusive",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — add content, refresh, see banner, click dismiss"
+      ],
+      "priority": 22,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-023",
+      "title": "Error handling, loading states, and edge case warnings",
+      "description": "As a user, I want clear feedback for loading, errors, and edge cases like short or long input.",
+      "acceptanceCriteria": [
+        "Repurpose button disabled with tooltip 'Enter some content first' when source is empty",
+        "Short input (<100 words): show warning toast 'Content is short — output quality may be limited' (non-blocking, still allows generation)",
+        "Long input (>5000 words): show info toast 'Long content detected — this may take longer'",
+        "API timeout or failure: error toast with a 'Retry' action button that re-triggers generation",
+        "Skeleton/shimmer loading state in the output panel while waiting for the first stream chunk",
+        "If streaming stops mid-way (partial content received), display what was received and show 'Retry' button",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — test with empty input (button disabled), test with short text (warning toast)"
+      ],
+      "priority": 23,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-024",
+      "title": "Live markdown preview toggle",
+      "description": "As a user, I want to toggle a rendered markdown preview of the output to see how it looks formatted.",
+      "acceptanceCriteria": [
+        "Add 'Preview' toggle button (eye icon) in the EditorToolbar",
+        "Implement `lib/markdown.ts` with `renderMarkdown(text: string): string` using unified/remark-parse/remark-rehype/rehype-stringify/rehype-sanitize pipeline",
+        "When Preview is active: output pane switches from CodeMirror to a rendered HTML div (with prose styling)",
+        "Preview is read-only — user cannot edit in preview mode",
+        "Toggling back returns to the editable CodeMirror with content intact",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — generate content, toggle preview, see rendered markdown, toggle back"
+      ],
+      "priority": 24,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-025",
+      "title": "Content history (last 10 items)",
+      "description": "As a user, I want to access my last 10 repurposed items to revisit previous work.",
+      "acceptanceCriteria": [
+        "Store history entries in localStorage at `repurposer:history` as a JSON array",
+        "Each entry: `{ id: string, sourceTitle: string (first 50 chars), sourceContent: string, outputs: Record<Format, string|null>, timestamp: string }` ",
+        "Auto-save a history entry when any format is generated (update existing entry if same source content)",
+        "Maximum 10 entries, oldest removed when limit exceeded (FIFO)",
+        "Add a history icon button in the header that opens a Sheet/modal listing history entries (title + timestamp)",
+        "Clicking a history entry restores its sourceContent and outputs into the editor",
+        "'Clear history' button at the bottom of the history panel",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — generate content, open history, see entry, click it to restore"
+      ],
+      "priority": 25,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-026",
+      "title": "Custom format templates",
+      "description": "As a power user, I want to create my own output format templates for platforms not built in.",
+      "acceptanceCriteria": [
+        "Add a '+' tab after the 4 default format tabs",
+        "Clicking '+' opens a Dialog/modal to create a custom format: name (text input), icon (emoji text input), system prompt (textarea), character limit (optional number input)",
+        "Custom formats stored in localStorage at `repurposer:customFormats` as a JSON array",
+        "Custom formats appear as additional tabs alongside the default 4",
+        "Custom formats can be generated, edited, exported just like built-in formats",
+        "Edit and delete buttons on custom format tabs (long press or right-click menu, or edit via settings)",
+        "Maximum 5 custom formats",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — create a custom format, see new tab, generate content for it"
+      ],
+      "priority": 26,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-027",
+      "title": "Diff view toggle (original vs repurposed)",
+      "description": "As a user, I want to see a visual diff between my source content and the repurposed output.",
+      "acceptanceCriteria": [
+        "Install `diff` npm package",
+        "Add 'Diff' toggle button (git-compare icon) in the EditorToolbar",
+        "When active: output pane shows an inline diff view highlighting additions (green) and removals (red) between source content and the generated output",
+        "Diff view is read-only",
+        "Toggling off returns to the normal editable CodeMirror output",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — generate content, toggle diff, see colored diff view"
+      ],
+      "priority": 27,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-028",
+      "title": "Client-side analytics dashboard",
+      "description": "As a user, I want to see basic usage stats for my content repurposing activity.",
+      "acceptanceCriteria": [
+        "Track events in localStorage at `repurposer:analytics`: format_generated (with format name), export_single, export_all, copy_clipboard, session_start",
+        "Each event stored as `{ event: string, format?: string, timestamp: string }`",
+        "Add an analytics/chart icon button in the header that opens a Sheet with the dashboard",
+        "Dashboard shows: total generations, generations per format (simple bar/list), total exports, most-used format",
+        "'Reset stats' button at the bottom",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — generate a few items, open analytics, see stats displayed"
+      ],
+      "priority": 28,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-029",
+      "title": "A/B variant generation",
+      "description": "As a marketer, I want to generate 2 alternative versions of the same format to pick the best one.",
+      "acceptanceCriteria": [
+        "After generating a format, show a 'Generate Variant' button (copy-plus icon) in the EditorToolbar",
+        "Clicking generates a second version using a modified prompt: prepend 'Generate an alternative version with a different angle or hook.' to the system prompt",
+        "Add a small toggle (A | B) above the output editor to switch between Variant A and Variant B",
+        "Both variants are independently editable",
+        "Copy and Export actions apply to the currently visible variant",
+        "Export includes `variant: A` or `variant: B` in the YAML frontmatter",
+        "Typecheck passes",
+        "Verify in browser using Playwright MCP — generate content, click Generate Variant, toggle between A and B"
+      ],
+      "priority": 29,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

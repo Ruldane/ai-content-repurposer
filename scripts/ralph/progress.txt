@@ -1,0 +1,23 @@
+# Ralph Progress Log
+Started: 2026-02-06
+Feature: AI Content Repurposer
+Branch: master
+---
+
+## US-001: Install core dependencies and configure environment
+Status: DONE
+Commit: 3ab3c29
+Notes: All packages installed successfully. Environment variables renamed in .env.local from ZAI_* to Z_AI_* (file not committed per .gitignore). Typecheck passes.
+---
+
+## US-002: Initialize shadcn/ui with required components
+Status: DONE
+Commit: ef25215
+Notes: shadcn/ui initialized with default config. All 7 components (button, tabs, dialog, badge, separator, sheet, sonner) installed successfully in components/ui/. Typecheck passes.
+---
+
+## US-003: Create project structure, types, and core lib files
+Status: DONE
+Commit: 2a8be29
+Notes: Created all folder structure (components/{editor,format,settings,export}, lib, hooks, types), implemented TypeScript types (Format, Tone, RepurposeRequest, AppState), configured AI provider with Z AI endpoint, created getSystemPrompt() with detailed format-specific prompts for LinkedIn, Twitter, Email, and Docs. Created stub files for metrics, storage, and export. Typecheck passes.
+---
