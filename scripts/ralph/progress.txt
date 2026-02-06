@@ -21,3 +21,27 @@ Status: DONE
 Commit: 2a8be29
 Notes: Created all folder structure (components/{editor,format,settings,export}, lib, hooks, types), implemented TypeScript types (Format, Tone, RepurposeRequest, AppState), configured AI provider with Z AI endpoint, created getSystemPrompt() with detailed format-specific prompts for LinkedIn, Twitter, Email, and Docs. Created stub files for metrics, storage, and export. Typecheck passes.
 ---
+
+## US-004: Split-pane layout shell with header
+Status: DONE
+Commit: 85577d6
+Notes: Implemented responsive split-pane layout with header bar. Updated layout.tsx with proper metadata and dark mode. Created header with title and settings icon button using shadcn Button component. Two-pane container with 50/50 split on desktop (>=1024px), stacked vertically on mobile with appropriate border separators. Fixed tw-animate-css import issue in globals.css. Verified with Playwright MCP browser tools on both desktop and mobile viewports.
+---
+
+## US-005: Source editor with CodeMirror and metrics
+Status: DONE
+Commit: f9ff55b
+Notes: Implemented SourceEditor component using @uiw/react-codemirror with markdown language support and line wrapping. Used next/dynamic with ssr: false to handle CodeMirror's browser API dependencies. Added metrics functions to lib/metrics.ts (getWordCount, getCharCount, getReadingTime). Footer displays live-updating metrics in format "X words · Y chars · Z min read". Wired into page.tsx with React state. Verified with Playwright - editor loads correctly, accepts text input, metrics update in real-time (58 words · 411 chars · 1 min read).
+---
+
+## US-006: AI streaming API route
+Status: DONE
+Commit: b1a5610
+Notes: Created POST /api/repurpose endpoint with full validation (content required, format validation). Integrated with lib/ai.ts provider and lib/prompts.ts. Used streamText from ai package with toTextStreamResponse() (not toDataStreamResponse() as originally specified). Error handling with 400/500 responses. Typecheck passes.
+---
+
+## US-007: useRepurpose streaming hook
+Status: DONE
+Commit: f68bf94
+Notes: Installed @ai-sdk/react package (separate from ai package, not ai/react). Implemented useRepurpose hook using useCompletion from @ai-sdk/react. Hook returns output (streamed text), isLoading, error, and generate function. Generate function accepts content, format, tone, and customInstructions. Typecheck passes.
+---
