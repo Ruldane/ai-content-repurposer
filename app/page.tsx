@@ -1,7 +1,13 @@
-import { Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
+'use client';
+
+import { useState } from 'react';
+import { Settings } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import SourceEditor from '@/components/editor/SourceEditor';
 
 export default function Home() {
+  const [sourceContent, setSourceContent] = useState('');
+
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
       {/* Header */}
@@ -19,11 +25,7 @@ export default function Home() {
       <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
         {/* Left pane - Source content */}
         <div className="flex w-full flex-col border-b border-border lg:w-1/2 lg:border-b-0 lg:border-r">
-          <div className="flex flex-1 items-center justify-center p-8">
-            <p className="text-sm text-muted-foreground">
-              Source content area
-            </p>
-          </div>
+          <SourceEditor value={sourceContent} onChange={setSourceContent} />
         </div>
 
         {/* Right pane - Output */}
