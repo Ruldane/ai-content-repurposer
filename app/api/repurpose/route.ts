@@ -12,7 +12,8 @@ export async function POST(req: NextRequest) {
   try {
     // Parse request body
     const body = await req.json();
-    const { content, format, tone, customInstructions } = body;
+    // useCompletion sends the prompt in the 'prompt' field, and other params in body
+    const { prompt: content, format, tone, customInstructions } = body;
 
     // Validate content
     if (!content || typeof content !== 'string' || content.trim().length === 0) {

@@ -1,12 +1,45 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Settings } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import SourceEditor from '@/components/editor/SourceEditor';
+import OutputEditor from '@/components/editor/OutputEditor';
+import { useRepurpose } from '@/hooks/useRepurpose';
 
 export default function Home() {
   const [sourceContent, setSourceContent] = useState('');
+  const [outputContent, setOutputContent] = useState('');
+
+  const { output, isLoading, error, generate } = useRepurpose();
+
+  // Update output content when streaming updates
+  useEffect(() => {
+    if (output) {
+      setOutputContent(output);
+    }
+  }, [output]);
+
+  // Show error toast when API fails
+  useEffect(() => {
+    if (error) {
+      toast.error('Generation failed', {
+        description: error,
+      });
+    }
+  }, [error]);
+
+  const handleRepurpose = async () => {
+    if (!sourceContent.trim()) {
+      return;
+    }
+
+    // Default to linkedin format for now (will be configurable in later stories)
+    await generate(sourceContent, 'linkedin');
+  };
+
+  const canRepurpose = sourceContent.trim().length > 0;
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
@@ -30,9 +63,13 @@ export default function Home() {
 
         {/* Right pane - Output */}
         <div className="flex w-full flex-col lg:w-1/2">
-          <div className="flex flex-1 items-center justify-center p-8">
-            <p className="text-sm text-muted-foreground">Output area</p>
-          </div>
+          <OutputEditor
+            value={outputContent}
+            onChange={setOutputContent}
+            isLoading={isLoading}
+            onRepurpose={handleRepurpose}
+            canRepurpose={canRepurpose}
+          />
         </div>
       </div>
     </div>
