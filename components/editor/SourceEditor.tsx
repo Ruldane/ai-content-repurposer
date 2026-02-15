@@ -6,6 +6,7 @@ import { markdown } from '@codemirror/lang-markdown';
 import { EditorView } from '@codemirror/view';
 import { Extension } from '@codemirror/state';
 import { getWordCount, getCharCount, getReadingTime } from '@/lib/metrics';
+import { ClearButton } from '@/components/editor/ClearButton';
 
 // Dynamically import CodeMirror with SSR disabled
 const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
@@ -20,11 +21,13 @@ const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
 interface SourceEditorProps {
   value: string;
   onChange: (value: string) => void;
+  onClear?: () => void;
 }
 
 const SourceEditor = memo(function SourceEditor({
   value,
   onChange,
+  onClear,
 }: SourceEditorProps) {
   const wordCount = getWordCount(value);
   const charCount = getCharCount(value);
@@ -55,15 +58,22 @@ const SourceEditor = memo(function SourceEditor({
         />
       </div>
 
-      {/* Footer with metrics */}
-      <div className="flex h-10 items-center justify-end gap-3 border-t border-border bg-muted/30 px-4 text-xs text-muted-foreground">
-        <span>
-          {wordCount.toLocaleString()} {wordCount === 1 ? 'word' : 'words'}
-        </span>
-        <span className="text-muted-foreground/50">·</span>
-        <span>{charCount.toLocaleString()} chars</span>
-        <span className="text-muted-foreground/50">·</span>
-        <span>{readingTime}</span>
+      {/* Footer with clear button and metrics */}
+      <div className="flex h-10 items-center justify-between border-t border-border bg-muted/30 px-4 text-xs text-muted-foreground">
+        <div className="flex items-center">
+          {onClear && (
+            <ClearButton onConfirm={onClear} disabled={!value} />
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <span>
+            {wordCount.toLocaleString()} {wordCount === 1 ? 'word' : 'words'}
+          </span>
+          <span className="text-muted-foreground/50">·</span>
+          <span>{charCount.toLocaleString()} chars</span>
+          <span className="text-muted-foreground/50">·</span>
+          <span>{readingTime}</span>
+        </div>
       </div>
     </div>
   );

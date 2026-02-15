@@ -7,7 +7,10 @@ import { EditorView } from '@codemirror/view';
 import { Extension } from '@codemirror/state';
 import { Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { EditorToolbar } from '@/components/editor/EditorToolbar';
+import { ExportButton } from '@/components/export/ExportButton';
 import { getWordCount, getCharCount } from '@/lib/metrics';
+import type { Format } from '@/types';
 
 // Dynamically import CodeMirror with SSR disabled
 const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
@@ -25,6 +28,8 @@ interface OutputEditorProps {
   isLoading: boolean;
   onRepurpose: () => void;
   canRepurpose: boolean;
+  format: Format;
+  sourceTitle: string;
 }
 
 const OutputEditor = memo(function OutputEditor({
@@ -33,6 +38,8 @@ const OutputEditor = memo(function OutputEditor({
   isLoading,
   onRepurpose,
   canRepurpose,
+  format,
+  sourceTitle,
 }: OutputEditorProps) {
   const wordCount = getWordCount(value);
   const charCount = getCharCount(value);
@@ -42,9 +49,14 @@ const OutputEditor = memo(function OutputEditor({
 
   return (
     <div className="flex h-full flex-col">
-      {/* Toolbar with Repurpose button */}
-      <div className="flex h-12 items-center justify-between border-b border-border bg-muted/30 px-4">
-        <div className="text-sm font-medium text-foreground">Output</div>
+      {/* Toolbar with Copy, Export, and Repurpose buttons */}
+      <EditorToolbar content={value}>
+        <ExportButton
+          format={format}
+          content={value}
+          sourceTitle={sourceTitle}
+          disabled={isLoading}
+        />
         <Button
           onClick={onRepurpose}
           disabled={!canRepurpose || isLoading}
@@ -63,7 +75,7 @@ const OutputEditor = memo(function OutputEditor({
             </>
           )}
         </Button>
-      </div>
+      </EditorToolbar>
 
       {/* Editor */}
       <div className="flex-1 overflow-hidden">
