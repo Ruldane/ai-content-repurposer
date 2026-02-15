@@ -7,15 +7,33 @@ import { Button } from '@/components/ui/button';
 import SourceEditor from '@/components/editor/SourceEditor';
 import OutputEditor from '@/components/editor/OutputEditor';
 import SettingsPanel from '@/components/settings/SettingsPanel';
+import FormatTabs from '@/components/format/FormatTabs';
 import { useRepurpose } from '@/hooks/useRepurpose';
 import { useSettings } from '@/hooks/useSettings';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { clearStorage } from '@/lib/storage';
+import type { Format } from '@/types';
+
+const EMPTY_OUTPUTS: Record<Format, string | null> = {
+  linkedin: null,
+  twitter: null,
+  email: null,
+  docs: null,
+};
 
 export default function Home() {
   const [sourceContent, setSourceContent] = useLocalStorage('source', '');
-  const [outputContent, setOutputContent] = useState('');
+  const [outputsJson, setOutputsJson] = useLocalStorage('outputs', JSON.stringify(EMPTY_OUTPUTS));
+  const [activeFormat, setActiveFormat] = useState<Format>('linkedin');
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const outputs: Record<Format, string | null> = (() => {
+    try {
+      return { ...EMPTY_OUTPUTS, ...JSON.parse(outputsJson) };
+    } catch {
+      return { ...EMPTY_OUTPUTS };
+    }
+  })();
 
   const { output, isLoading, error, generate } = useRepurpose();
   const {
@@ -26,11 +44,13 @@ export default function Home() {
     setAutoSave,
   } = useSettings();
 
-  // Update output content when streaming updates
+  // Update output content for active format when streaming
   useEffect(() => {
     if (output) {
-      setOutputContent(output);
+      const next = { ...outputs, [activeFormat]: output };
+      setOutputsJson(JSON.stringify(next));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [output]);
 
   // Show error toast when API fails
@@ -43,27 +63,33 @@ export default function Home() {
   }, [error]);
 
   const handleRepurpose = async () => {
-    if (!sourceContent.trim()) {
-      return;
-    }
-
-    const format = 'linkedin' as const;
+    if (!sourceContent.trim()) return;
     await generate(
       sourceContent,
-      format,
-      settings.tones[format],
+      activeFormat,
+      settings.tones[activeFormat],
       settings.customInstructions || undefined
     );
   };
 
+  const handleOutputChange = useCallback(
+    (value: string) => {
+      const next = { ...outputs, [activeFormat]: value };
+      setOutputsJson(JSON.stringify(next));
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeFormat, setOutputsJson]
+  );
+
   const handleClear = useCallback(() => {
     setSourceContent('');
-    setOutputContent('');
+    setOutputsJson(JSON.stringify(EMPTY_OUTPUTS));
     clearStorage('source');
     clearStorage('outputs');
-  }, [setSourceContent]);
+  }, [setSourceContent, setOutputsJson]);
 
   const canRepurpose = sourceContent.trim().length > 0;
+  const currentOutput = outputs[activeFormat] ?? '';
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
@@ -72,14 +98,16 @@ export default function Home() {
         <h1 className="text-lg font-semibold tracking-tight">
           AI Content Repurposer
         </h1>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => setSettingsOpen(true)}
-        >
-          <Settings className="size-4" />
-          <span className="sr-only">Settings</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setSettingsOpen(true)}
+          >
+            <Settings className="size-4" />
+            <span className="sr-only">Settings</span>
+          </Button>
+        </div>
       </header>
 
       {/* Split-pane container */}
@@ -91,13 +119,18 @@ export default function Home() {
 
         {/* Right pane - Output */}
         <div className="flex w-full flex-col lg:w-1/2">
+          <FormatTabs
+            activeFormat={activeFormat}
+            onFormatChange={setActiveFormat}
+            outputs={outputs}
+          />
           <OutputEditor
-            value={outputContent}
-            onChange={setOutputContent}
+            value={currentOutput}
+            onChange={handleOutputChange}
             isLoading={isLoading}
             onRepurpose={handleRepurpose}
             canRepurpose={canRepurpose}
-            format="linkedin"
+            format={activeFormat}
             sourceTitle={sourceContent}
           />
         </div>
