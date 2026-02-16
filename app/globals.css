@@ -123,3 +123,66 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(0.5 0 0 / 30%);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.5 0 0 / 50%);
+}
+
+/* CodeMirror theme overrides */
+.cm-editor {
+  height: 100% !important;
+  font-family: var(--font-geist-mono), monospace !important;
+}
+.cm-editor .cm-scroller {
+  padding: 1rem;
+}
+.cm-editor .cm-gutters {
+  border: none !important;
+  background: transparent !important;
+}
+.cm-editor .cm-activeLine,
+.cm-editor .cm-activeLineGutter {
+  background: transparent !important;
+}
+.cm-editor.cm-focused {
+  outline: none !important;
+}
+
+/* Accent gradient for primary buttons */
+[data-slot="button"][data-variant="default"] {
+  background: linear-gradient(135deg, oklch(0.55 0.15 250) 0%, oklch(0.45 0.2 280) 100%);
+  border: none;
+  box-shadow: 0 1px 3px oklch(0.3 0.15 265 / 30%);
+}
+.dark [data-slot="button"][data-variant="default"] {
+  background: linear-gradient(135deg, oklch(0.6 0.18 260) 0%, oklch(0.5 0.22 285) 100%);
+  box-shadow: 0 1px 4px oklch(0.3 0.2 270 / 40%);
+}
+[data-slot="button"][data-variant="default"]:hover {
+  filter: brightness(1.1);
+}
+
+/* Subtle glow on Generate All / Repurpose */
+[data-slot="button"][data-variant="default"]:not(:disabled) {
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
+}
+[data-slot="button"][data-variant="default"]:not(:disabled):hover {
+  box-shadow: 0 2px 12px oklch(0.5 0.2 270 / 35%);
+}
+
+/* Format tab active indicator */
+[data-slot="tabs-trigger"][data-state="active"]::after {
+  background: linear-gradient(90deg, oklch(0.55 0.15 250), oklch(0.5 0.2 280)) !important;
+}

@@ -3,26 +3,31 @@ import { saveToStorage, loadFromStorage } from '@/lib/storage';
 
 /**
  * React hook that syncs state with localStorage.
- * Reads from localStorage on mount (lazy init) and debounce-writes on change.
- *
- * @param key - storage key (auto-prefixed with version by storage.ts)
- * @param defaultValue - fallback when nothing is stored
- * @param debounceMs - write debounce delay in ms (default 500)
+ * Uses defaultValue on initial render (avoids hydration mismatch),
+ * then loads from localStorage on mount and debounce-writes on change.
  */
 export function useLocalStorage(
   key: string,
   defaultValue: string,
   debounceMs = 500,
 ): [string, (value: string) => void] {
-  // Lazy init: read from localStorage only on first render
-  const [value, setValue] = useState(() => {
-    return loadFromStorage(key) ?? defaultValue;
-  });
-
+  const [value, setValue] = useState(defaultValue);
+  const isInitialized = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Debounced write to localStorage whenever value changes
+  // Load from localStorage after mount (avoids hydration mismatch)
   useEffect(() => {
+    const stored = loadFromStorage(key);
+    if (stored !== null) {
+      setValue(stored);
+    }
+    isInitialized.current = true;
+  }, [key]);
+
+  // Debounced write to localStorage whenever value changes (skip initial load)
+  useEffect(() => {
+    if (!isInitialized.current) return;
+
     timerRef.current = setTimeout(() => {
       saveToStorage(key, value);
     }, debounceMs);

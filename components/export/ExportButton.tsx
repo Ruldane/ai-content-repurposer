@@ -11,6 +11,7 @@ interface ExportButtonProps {
   content: string;
   sourceTitle: string;
   disabled?: boolean;
+  variant?: 'A' | 'B';
 }
 
 export function ExportButton({
@@ -18,10 +19,11 @@ export function ExportButton({
   content,
   sourceTitle,
   disabled = false,
+  variant,
 }: ExportButtonProps) {
   const handleExport = () => {
     try {
-      exportSingleFormat(format, content, sourceTitle);
+      exportSingleFormat(format, content, sourceTitle, variant);
       toast.success('Export complete', {
         description: `Downloaded ${format} content as .md file`,
       });

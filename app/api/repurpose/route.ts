@@ -4,55 +4,60 @@ import { model } from '@/lib/ai';
 import { getSystemPrompt } from '@/lib/prompts';
 import type { Format, Tone } from '@/types';
 
+const VALID_FORMATS: Format[] = ['linkedin', 'twitter', 'email', 'docs'];
+
 /**
  * POST /api/repurpose
  * Streams AI-generated content repurposed for a specific format
  */
 export async function POST(req: NextRequest) {
   try {
-    // Parse request body
     const body = await req.json();
-    // useCompletion sends the prompt in the 'prompt' field, and other params in body
-    const { prompt: content, format, tone, customInstructions } = body;
+    const { prompt: content, format, tone, customInstructions, customSystemPrompt } = body;
 
-    // Validate content
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
-      return Response.json(
-        { error: 'Content is required' },
-        { status: 400 }
-      );
+      return Response.json({ error: 'Content is required' }, { status: 400 });
     }
 
-    // Validate format
-    const validFormats: Format[] = ['linkedin', 'twitter', 'email', 'docs'];
-    if (!format || !validFormats.includes(format as Format)) {
-      return Response.json(
-        { error: 'Invalid format' },
-        { status: 400 }
-      );
+    if (!format || typeof format !== 'string') {
+      return Response.json({ error: 'Invalid format' }, { status: 400 });
     }
 
-    // Get system prompt with optional tone and custom instructions
-    const systemPrompt = getSystemPrompt(
-      format as Format,
-      tone as Tone | undefined,
-      customInstructions as string | undefined
-    );
+    // Build system prompt: use custom prompt for custom formats, otherwise use built-in
+    let systemPrompt: string;
+    if (VALID_FORMATS.includes(format as Format)) {
+      systemPrompt = getSystemPrompt(
+        format as Format,
+        tone as Tone | undefined,
+        customInstructions as string | undefined
+      );
+    } else if (customSystemPrompt && typeof customSystemPrompt === 'string') {
+      systemPrompt = customSystemPrompt;
+      if (tone) {
+        const toneMap: Record<string, string> = {
+          professional: '\n\nTone: Professional and authoritative.',
+          casual: '\n\nTone: Casual and friendly.',
+          technical: '\n\nTone: Technical and precise.',
+          storytelling: '\n\nTone: Narrative and engaging.',
+        };
+        systemPrompt += toneMap[tone] || '';
+      }
+      if (customInstructions) {
+        systemPrompt += `\n\nAdditional Instructions:\n${customInstructions}`;
+      }
+    } else {
+      return Response.json({ error: 'Invalid format' }, { status: 400 });
+    }
 
-    // Stream AI response
     const result = streamText({
       model,
       system: systemPrompt,
       prompt: `Repurpose the following content:\n\n${content}`,
     });
 
-    // Return streaming response
     return result.toTextStreamResponse();
   } catch (error) {
     console.error('AI generation failed:', error);
-    return Response.json(
-      { error: 'AI generation failed' },
-      { status: 500 }
-    );
+    return Response.json({ error: 'AI generation failed' }, { status: 500 });
   }
 }

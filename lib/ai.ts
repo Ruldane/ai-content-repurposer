@@ -5,7 +5,7 @@ import { createAnthropic } from '@ai-sdk/anthropic';
  * Uses environment variables for API key, base URL, and model configuration
  */
 const provider = createAnthropic({
-  baseURL: process.env.Z_AI_BASE_URL,
+  baseURL: process.env.Z_AI_BASE_URL?.replace(/\/messages\/?$/, '') || process.env.Z_AI_BASE_URL,
   apiKey: process.env.Z_AI_API_KEY,
 });
 

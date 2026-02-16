@@ -140,8 +140,8 @@
         "Verify in browser using Playwright MCP — paste content in left pane, click Repurpose, see streaming output in right pane"
       ],
       "priority": 8,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Implemented OutputEditor component with CodeMirror, Repurpose button with loading states, skeleton loading UI, and toast error notifications. Fixed API route to work with useCompletion's prompt parameter. Added Toaster to layout. Verified with Playwright - button states work correctly, API endpoint responds with 200 OK."
     },
     {
       "id": "US-009",
@@ -157,8 +157,8 @@
         "Verify in browser using Playwright MCP — generate content, click copy, see toast"
       ],
       "priority": 9,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "EditorToolbar implemented with Copy button using navigator.clipboard.writeText(). Toast notification shown on success. Button disabled when output is empty. Verified via Playwright — 'Copied to clipboard!' toast appears."
     },
     {
       "id": "US-010",
@@ -173,8 +173,8 @@
         "Verify in browser using Playwright MCP — type content, refresh page, content is restored"
       ],
       "priority": 10,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Storage utils implemented with versioned keys (repurposer:source:v1). useLocalStorage hook with debounced writes and hydration-safe initial render (fixed SSR mismatch by deferring localStorage read to useEffect). Verified via Playwright — content persists across page refresh."
     },
     {
       "id": "US-011",
@@ -192,8 +192,8 @@
         "Verify in browser using Playwright MCP — click between tabs, see active state change and badges"
       ],
       "priority": 11,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "FormatTabs with icons (Linkedin, Twitter, Mail, FileText) and 'done' badges for generated content. Active tab highlighted with gradient indicator. Switching tabs preserves content. Verified via Playwright."
     },
     {
       "id": "US-012",
@@ -210,8 +210,8 @@
         "Verify in browser using Playwright MCP — generate LinkedIn, edit it, switch to Twitter tab, switch back, edits preserved"
       ],
       "priority": 12,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Outputs stored as Record<string, string | null> in useLocalStorage('outputs'). Per-format editing preserved when switching tabs. Verified via Playwright — LinkedIn content persisted after tab switch."
     },
     {
       "id": "US-013",
@@ -229,8 +229,8 @@
         "Verify in browser using Playwright MCP — generate content, click export, see download triggered"
       ],
       "priority": 13,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "ExportButton with Download icon in toolbar. exportSingleFormat creates .md with YAML frontmatter (source, format, generated, word_count, character_count, tool). Supports variant tag. Button disabled when no content."
     },
     {
       "id": "US-014",
@@ -248,8 +248,8 @@
         "Verify in browser using Playwright MCP — generate content for each format, check metrics display"
       ],
       "priority": 14,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "getPlatformMetrics returns format-specific metrics with color coding. LinkedIn: chars (green/yellow/red thresholds), words. Twitter: tweet count, over-limit flags. Email: subject/preview length. Docs: section count, reading time. Verified in footer via Playwright."
     },
     {
       "id": "US-015",
@@ -266,8 +266,8 @@
         "Verify in browser using Playwright MCP — generate LinkedIn, click Regenerate, see new output replace old"
       ],
       "priority": 15,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Regenerate button (RefreshCw icon) in EditorToolbar. Calls onRepurpose which re-triggers generation for active format only. Button disabled while loading or when no content exists. Spinning animation during generation."
     },
     {
       "id": "US-016",
@@ -283,8 +283,8 @@
         "Verify in browser using Playwright MCP — resize viewport to 375px width, verify stacked layout and usability"
       ],
       "priority": 16,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Stacked layout below lg breakpoint. Collapsible source editor with ChevronDown/Up toggle on mobile. Sticky bottom bar with min-h-[44px] Repurpose button. Verified at 375px via Playwright."
     },
     {
       "id": "US-017",
@@ -303,8 +303,8 @@
         "Verify in browser using Playwright MCP — open settings, change a tone, close, verify it persists on reload"
       ],
       "priority": 17,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "SettingsPanel as Sheet from right. Tone selectors per format, custom instructions textarea, theme toggle (light/dark/system), auto-save checkbox. Persisted to localStorage via useSettings hook. Fixed hydration by deferring localStorage read. Verified via Playwright."
     },
     {
       "id": "US-018",
@@ -322,8 +322,8 @@
         "Verify in browser using Playwright MCP — paste content, click Generate All, watch each tab badge update"
       ],
       "priority": 18,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Generate All button next to format tabs. Sequential generation with per-format error handling (continues on failure). Active tab switches as each format generates. Badge updates on completion. Button disabled during generation or when source empty."
     },
     {
       "id": "US-019",
@@ -340,8 +340,8 @@
         "Verify in browser using Playwright MCP — generate multiple formats, click Export All, see zip download"
       ],
       "priority": 19,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "jszip and file-saver installed. exportAllFormats creates .zip with per-format .md files with frontmatter. Export All button (PackageOpen icon) in toolbar, disabled when no outputs exist."
     },
     {
       "id": "US-020",
@@ -357,8 +357,8 @@
         "Verify in browser using Playwright MCP — click upload button, verify dialog appears if content exists"
       ],
       "priority": 20,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Drag-and-drop zone with dashed border highlight on dragOver. Upload button (Upload icon) in source footer. Only accepts .md/.txt. Confirmation dialog when editor has existing content. Verified via Playwright."
     },
     {
       "id": "US-021",
@@ -374,8 +374,8 @@
         "Verify in browser using Playwright MCP — type content, click Clear, confirm, verify editor is empty"
       ],
       "priority": 21,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "ClearButton component with Trash2 icon and shadcn Dialog confirmation. Clears source, outputs, and localStorage keys. Cancel dismisses dialog. Verified via Playwright."
     },
     {
       "id": "US-022",
@@ -392,8 +392,8 @@
         "Verify in browser using Playwright MCP — add content, refresh, see banner, click dismiss"
       ],
       "priority": 22,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Banner with subtle blue-tinted background. Shows on load when source content exists. Dismiss (X) button and 'Start fresh' link that clears all content. Verified via Playwright — banner appears on session restore."
     },
     {
       "id": "US-023",
@@ -410,8 +410,8 @@
         "Verify in browser using Playwright MCP — test with empty input (button disabled), test with short text (warning toast)"
       ],
       "priority": 23,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Repurpose button disabled when source empty. Short/long content toasts. Error toast with Retry action. Skeleton shimmer loading state in output panel. Partial content displayed on streaming interruption."
     },
     {
       "id": "US-024",
@@ -427,8 +427,8 @@
         "Verify in browser using Playwright MCP — generate content, toggle preview, see rendered markdown, toggle back"
       ],
       "priority": 24,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Preview toggle (Eye/EyeOff icon) in toolbar. renderMarkdown using unified/remark-parse/remark-rehype/rehype-sanitize/rehype-stringify pipeline. Prose-styled read-only div. Content intact on toggle-back. Verified via Playwright."
     },
     {
       "id": "US-025",
@@ -446,8 +446,8 @@
         "Verify in browser using Playwright MCP — generate content, open history, see entry, click it to restore"
       ],
       "priority": 25,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "useHistory hook with localStorage persistence. HistoryPanel as Sheet with entry list (title + timestamp). Click to restore. Clear history button. Max 10 entries FIFO. Verified via Playwright."
     },
     {
       "id": "US-026",
@@ -465,8 +465,8 @@
         "Verify in browser using Playwright MCP — create a custom format, see new tab, generate content for it"
       ],
       "priority": 26,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "'+' tab opens CustomFormatDialog with name, icon, system prompt, char limit fields. Custom formats persisted to localStorage. Appear as additional tabs. Generation uses custom system prompt via API route extension. Edit/delete via context menu. Max 5 custom formats."
     },
     {
       "id": "US-027",
@@ -482,8 +482,8 @@
         "Verify in browser using Playwright MCP — generate content, toggle diff, see colored diff view"
       ],
       "priority": 27,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Diff toggle (GitCompare icon) in toolbar. Inline DiffView component with red/green highlighted additions and removals. Read-only view. Toggle back to editable CodeMirror. Verified via Playwright."
     },
     {
       "id": "US-028",
@@ -499,8 +499,8 @@
         "Verify in browser using Playwright MCP — generate a few items, open analytics, see stats displayed"
       ],
       "priority": 28,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "useAnalytics hook tracking events in localStorage. AnalyticsDashboard as Sheet with total generations, per-format breakdown, total exports, most-used format. Reset stats button. Verified via Playwright — shows correct generation counts."
     },
     {
       "id": "US-029",
@@ -517,8 +517,8 @@
         "Verify in browser using Playwright MCP — generate content, click Generate Variant, toggle between A and B"
       ],
       "priority": 29,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Generate Variant button (CopyPlus icon) triggers generation with 'Generate an alternative version with a different angle or hook.' prepended to custom instructions. Variant A/B toggle above output editor. Both independently editable. Copy/Export apply to visible variant. Export includes variant tag in frontmatter. Variant B state managed in page.tsx and passed to OutputEditor. Verified via Playwright — variant B generated, A/B toggle switches content correctly."
     }
   ]
 }

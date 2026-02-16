@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { saveToStorage, loadFromStorage } from '@/lib/storage';
 import type { Format, Tone } from '@/types';
 
@@ -45,10 +45,18 @@ function persistSettings(settings: Settings): void {
 }
 
 export function useSettings() {
-  const [settings, setSettings] = useState<Settings>(() => loadSettings());
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const isInitialized = useRef(false);
 
-  // Persist to localStorage on every change
+  // Load from localStorage after mount
   useEffect(() => {
+    setSettings(loadSettings());
+    isInitialized.current = true;
+  }, []);
+
+  // Persist to localStorage on every change (skip initial)
+  useEffect(() => {
+    if (!isInitialized.current) return;
     persistSettings(settings);
   }, [settings]);
 

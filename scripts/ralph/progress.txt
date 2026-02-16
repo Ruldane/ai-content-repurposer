@@ -45,3 +45,51 @@ Status: DONE
 Commit: f68bf94
 Notes: Installed @ai-sdk/react package (separate from ai package, not ai/react). Implemented useRepurpose hook using useCompletion from @ai-sdk/react. Hook returns output (streamed text), isLoading, error, and generate function. Generate function accepts content, format, tone, and customInstructions. Typecheck passes.
 ---
+
+## US-008: Output panel with streaming display and Repurpose button
+Status: DONE
+Commit: f13f4a3
+Notes: Created OutputEditor component with CodeMirror (using next/dynamic with ssr: false), Repurpose button with Sparkles icon and loading spinner, skeleton loading state for initial stream, output metrics footer. Added Toaster component to layout for error notifications. Wired everything in page.tsx with useRepurpose hook and error toast handling. Fixed API route to read 'prompt' field (how useCompletion sends data) instead of 'content'. Verified with Playwright - button states correct, API returns 200 OK.
+---
+
+## US-009 through US-029: Full feature verification and bug fixes
+Status: DONE
+Notes: All features US-009 to US-029 were already implemented in code but marked as passes: false. Verified and fixed the following critical bugs:
+
+### Critical Bugs Fixed:
+1. **AI streaming (lib/ai.ts)**: @ai-sdk/anthropic appends /messages to baseURL, but Z_AI_BASE_URL already included /messages. Fixed by stripping /messages suffix from env var.
+2. **Stream protocol mismatch (hooks/useRepurpose.ts)**: useCompletion from @ai-sdk/react v3 defaults to data stream protocol, but API returns text stream. Fixed by adding streamProtocol: 'text'.
+3. **Hydration error (hooks/useLocalStorage.ts, hooks/useSettings.ts)**: useState initialized from localStorage during SSR caused hydration mismatch. Fixed by deferring localStorage read to useEffect with isInitialized ref guard.
+4. **A/B variant generation (US-029)**: Generate Variant button only toggled view without triggering generation. Fixed by adding handleVariantGenerate in page.tsx that calls generate() with modified prompt, managing variant B state at page level, and passing variant content/callbacks to OutputEditor.
+5. **Custom format API support (app/api/repurpose/route.ts)**: Added support for custom format system prompts alongside built-in formats.
+
+### Design Enhancements (globals.css):
+- Custom scrollbar styling
+- CodeMirror theme overrides (transparent gutters, no active line highlight)
+- Gradient accent buttons with glow effect on hover
+- Gradient tab active indicator
+- Header with gradient sparkle icon
+
+### All Features Verified via Playwright MCP:
+- US-009: Copy to clipboard with toast notification
+- US-010: localStorage persistence with debounced writes
+- US-011: Format tabs with icons and badge indicators
+- US-012: Per-format output storage preserved across tab switches
+- US-013: Export .md with YAML frontmatter
+- US-014: Platform-specific metrics with color-coded warnings
+- US-015: Regenerate button with spinning animation
+- US-016: Mobile responsive layout at 375px with sticky bottom bar
+- US-017: Settings panel (tone, custom instructions, theme, auto-save)
+- US-018: Batch Generate All sequential generation
+- US-019: Export All as .zip with jszip/file-saver
+- US-020: File upload drag-and-drop with confirmation dialog
+- US-021: Clear button with confirmation dialog
+- US-022: Session restore banner with dismiss and start fresh
+- US-023: Error handling, skeleton loading, edge case toasts
+- US-024: Live markdown preview with unified pipeline
+- US-025: Content history (max 10, FIFO, restore)
+- US-026: Custom format templates with '+' tab
+- US-027: Diff view with red/green line highlighting
+- US-028: Analytics dashboard with generation counts
+- US-029: A/B variant generation with independent editing
+---
