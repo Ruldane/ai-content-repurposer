@@ -10,6 +10,7 @@ import {
   GitCompare,
   PackageOpen,
   CopyPlus,
+  Lightbulb,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,8 @@ interface EditorToolbarProps {
   sourceTitle?: string;
   onVariantGenerate?: () => void;
   hasContent?: boolean;
+  insightsOpen?: boolean;
+  onInsightsToggle?: () => void;
 }
 
 export function EditorToolbar({
@@ -51,6 +54,8 @@ export function EditorToolbar({
   sourceTitle,
   onVariantGenerate,
   hasContent,
+  insightsOpen,
+  onInsightsToggle,
 }: EditorToolbarProps) {
   const [copied, setCopied] = useState(false);
 
@@ -198,6 +203,26 @@ export function EditorToolbar({
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">Export all as .zip</TooltipContent>
+          </Tooltip>
+        )}
+
+        {/* Insights toggle */}
+        {onInsightsToggle && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={onInsightsToggle}
+                disabled={!content}
+                variant={insightsOpen ? 'secondary' : 'ghost'}
+                size="icon-sm"
+                aria-label={insightsOpen ? 'Hide insights' : 'Show insights'}
+              >
+                <Lightbulb className="size-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {insightsOpen ? 'Hide insights' : 'Insights'}
+            </TooltipContent>
           </Tooltip>
         )}
       </div>

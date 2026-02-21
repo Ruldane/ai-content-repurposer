@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useState, useEffect } from 'react';
+import { memo, useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useTheme } from 'next-themes';
 import { markdown } from '@codemirror/lang-markdown';
@@ -12,6 +12,7 @@ import { EditorToolbar } from '@/components/editor/EditorToolbar';
 import { ExportButton } from '@/components/export/ExportButton';
 import { getPlatformMetrics } from '@/lib/metrics';
 import { renderMarkdown } from '@/lib/markdown';
+import InsightsPanel from '@/components/insights/InsightsPanel';
 import type { Format } from '@/types';
 
 const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
@@ -57,6 +58,18 @@ const OutputEditor = memo(function OutputEditor({
   const [previewHtml, setPreviewHtml] = useState('');
   const [diffMode, setDiffMode] = useState(false);
   const [variant, setVariant] = useState<'A' | 'B'>('A');
+  const [insightsOpen, setInsightsOpen] = useState(false);
+
+  const handleInsert = useCallback(
+    (text: string) => {
+      if (variant === 'B') {
+        onVariantBChange?.((variantBContent ?? '') + text);
+      } else {
+        onChange(value + text);
+      }
+    },
+    [variant, variantBContent, onVariantBChange, onChange, value]
+  );
 
   const extensions: Extension[] = [markdown(), EditorView.lineWrapping];
 
@@ -112,6 +125,8 @@ const OutputEditor = memo(function OutputEditor({
           onVariantGenerate?.();
         }}
         hasContent={!!value}
+        insightsOpen={insightsOpen}
+        onInsightsToggle={() => setInsightsOpen(!insightsOpen)}
       >
         <ExportButton
           format={format}
@@ -181,6 +196,15 @@ const OutputEditor = memo(function OutputEditor({
           />
         )}
       </div>
+
+      {/* Insights panel (collapsible) */}
+      {insightsOpen && (
+        <InsightsPanel
+          content={displayValue}
+          format={format}
+          onInsert={handleInsert}
+        />
+      )}
 
       {/* Footer with platform-specific metrics */}
       <div className="flex h-10 items-center justify-end gap-3 border-t border-border bg-muted/30 px-4 text-xs text-muted-foreground">
